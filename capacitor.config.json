@@ -1,0 +1,9 @@
+{
+  "appId": "com.kleintech.chantierpro",
+  "appName": "Chantier Pro",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#1e232b"
+  }
+}
