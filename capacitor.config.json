@@ -1,6 +1,6 @@
 {
   "appId": "com.kleintech.chantierpro",
-  "appName": "Chantier Pro",
+  "appName": "GESTION D’ENTREPRISE",
   "webDir": "www",
   "android": {
     "allowMixedContent": false,

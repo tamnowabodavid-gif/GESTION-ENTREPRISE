@@ -1,4 +1,4 @@
-name: Construire l'APK Chantier Pro
+name: Construire l'APK GESTION D'ENTREPRISE
 on:
   push:
     branches: [main]
@@ -47,12 +47,12 @@ jobs:
           fi
           BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
           "$ANDROID_HOME/build-tools/$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
-          "$ANDROID_HOME/build-tools/$BT/apksigner" sign --ks ks.jks --ks-key-alias chantierpro --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS --out "ChantierPro-${{ steps.v.outputs.version }}.apk" aligned.apk
+          "$ANDROID_HOME/build-tools/$BT/apksigner" sign --ks ks.jks --ks-key-alias chantierpro --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS --out "GESTION-ENTREPRISE-${{ steps.v.outputs.version }}.apk" aligned.apk
           rm ks.jks
       - name: Publier la version
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.v.outputs.version }}
-          name: Chantier Pro ${{ steps.v.outputs.version }}
-          files: ChantierPro-*.apk
+          name: GESTION D'ENTREPRISE ${{ steps.v.outputs.version }}
+          files: GESTION-ENTREPRISE-*.apk
           make_latest: true
