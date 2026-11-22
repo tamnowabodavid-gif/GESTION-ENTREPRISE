@@ -37,7 +37,13 @@ jobs:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
         run: |
-          echo "$KEYSTORE_B64" | base64 -d > ks.jks
+          printf '%s' "$KEYSTORE_B64" | sed 's/^KEYSTORE_B64=//' | tr -d ' \r\n\t' | base64 -d > ks.jks
+          KEYSTORE_PASS=$(printf '%s' "$KEYSTORE_PASS" | sed 's/^KEYSTORE_PASS=//' | tr -d ' \r\n\t')
+          export KEYSTORE_PASS
+          if ! keytool -list -keystore ks.jks -storepass "$KEYSTORE_PASS" >/dev/null 2>&1; then
+            echo "::error::Clé de signature illisible : recolle le secret KEYSTORE_B64 (tout le contenu de ks.b64) et KEYSTORE_PASS (le texte après KEYSTORE_PASS=)."
+            exit 1
+          fi
           BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
           "$ANDROID_HOME/build-tools/$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
           "$ANDROID_HOME/build-tools/$BT/apksigner" sign --ks ks.jks --ks-key-alias chantierpro --ks-pass env:KEYSTORE_PASS --key-pass env:KEYSTORE_PASS --out "ChantierPro-${{ steps.v.outputs.version }}.apk" aligned.apk
