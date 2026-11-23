@@ -8,6 +8,8 @@ service cloud.firestore {
     function can(c) { return active() && c in me().colls; }
     function onCh(cid) { return cid in me().chantiers; }
     function myEmp() { return me().get('employeId', '-'); }
+    function lecteur() { return active() && request.auth.uid in resource.data.get('lecteurs', []); }
+    function seuls(champs) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(champs); }
 
     match /users/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
@@ -35,12 +37,62 @@ service cloud.firestore {
       allow create, update: if isAdmin() || (active() && (request.resource.data.employeId == myEmp() || (can('pointages') && onCh(request.resource.data.chantierId))));
       allow delete: if isAdmin();
     }
+    // tentatives de pointage refusées (hors zone)
+    match /ptrefus/{id} {
+      allow read, write: if isAdmin();
+      allow create: if active() && request.resource.data.employeId == myEmp();
+    }
+    // fiches de paie : l'employé lit les siennes
+    match /fiches/{id} {
+      allow read, write: if isAdmin();
+      allow read: if active() && (resource.data.employeId == myEmp() || lecteur());
+    }
+    // acceptation du règlement intérieur
+    match /reglacc/{id} {
+      allow read, write: if isAdmin();
+      allow read: if active() && resource.data.uid == request.auth.uid;
+      allow create: if active() && request.resource.data.uid == request.auth.uid;
+    }
+    // messagerie : fil du chantier, canal général, messages privés (lecteurs)
+    match /messages/{id} {
+      allow read, write: if isAdmin();
+      allow read: if active() && (resource.data.chantierId == '_general' || lecteur() || (can('messages') && onCh(resource.data.chantierId)));
+      allow create: if active() && request.resource.data.uid == request.auth.uid
+                    && (request.resource.data.chantierId in ['_general', '_dm'] || (can('messages') && onCh(request.resource.data.chantierId)));
+      allow update, delete: if active() && resource.data.uid == request.auth.uid;
+    }
+    // demandes de prix : le fournisseur remplit ses prix
+    match /dprix/{id} {
+      allow read, write: if isAdmin();
+      allow read: if lecteur() || (can('dprix') && onCh(resource.data.chantierId));
+      allow update: if (lecteur() && seuls(['reponses', 'statut', 'maj', 'lecteurs'])) || (can('dprix') && onCh(resource.data.chantierId));
+    }
+    // bons de commande : le fournisseur confirme et déclare la livraison ; le magasinier réceptionne
+    match /bons/{id} {
+      allow read, write: if isAdmin();
+      allow read: if lecteur() || (can('bons') && onCh(resource.data.chantierId));
+      allow update: if (lecteur() && seuls(['fConf', 'fLiv', 'livraisonDate', 'maj', 'lecteurs'])) || (can('bons') && onCh(resource.data.chantierId));
+    }
+    // intervenants : chacun lit sa propre fiche
+    match /intervenants/{id} {
+      allow read, write: if isAdmin();
+      allow read: if active() && id in me().get('interv', []);
+    }
+    // photos et justificatifs (stockés dans Firestore)
+    match /blobs/{id} {
+      allow read: if isAdmin() || active();
+      allow create: if isAdmin() || (active() && request.resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
     match /{coll}/{id} {
       allow read, write: if isAdmin();
-      allow read: if coll in ['etapes', 'journal', 'historique', 'pieces', 'messages', 'rapports', 'demandes']
+      allow read: if coll in ['etapes', 'journal', 'historique', 'pieces', 'rapports', 'demandes',
+                              'achats', 'mouvements', 'stockcfg', 'devis', 'contrats', 'factures', 'recus']
                   && can(coll) && onCh(resource.data.chantierId);
-      allow create, update: if coll in ['etapes', 'journal', 'historique', 'pieces', 'messages', 'rapports', 'demandes']
+      allow create, update: if coll in ['etapes', 'journal', 'historique', 'pieces', 'rapports', 'demandes',
+                                        'achats', 'mouvements', 'stockcfg']
                   && can(coll) && onCh(request.resource.data.chantierId);
+      allow create: if coll == 'historique' && active() && onCh(request.resource.data.chantierId);
     }
   }
 }
