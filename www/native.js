@@ -1,11 +1,11 @@
 /* native.js — application Android (APK), sauvegarde / restauration des données, mises à jour */
-const APP_VERSION='2026.11.22.2';
+const APP_VERSION='2026.11.22.3';
 const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 const capP=n=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[n];
 /* mode équipe (Firebase) : seulement dans l'application Android et la version ordinateur, jamais dans Claude */
 function loadJs(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=()=>res();s.onerror=()=>{s.remove();rej(new Error('chargement impossible : '+src))};document.head.appendChild(s)})}
 const teamCapable=()=>isNative()||/\.github\.io$/.test(location.hostname)||location.hostname==='localhost'||location.protocol==='file:';
-if(!window.claude&&teamCapable())window.claude={use:n=>n==='db'?loadJs('team.js').then(()=>window.teamInit?window.teamInit():null).catch(e=>{console.error(e);return null}):Promise.resolve(null)};
+if(!window.claude&&teamCapable())window.claude={use:n=>n==='db'?loadJs('team.js').then(()=>loadJs('fbm.js').catch(()=>{})).then(()=>window.teamInit?window.teamInit():null).catch(e=>{console.error(e);return null}):Promise.resolve(null)};
 /* enregistrement des fichiers hors de Claude : partage Android (WhatsApp, Drive, Fichiers) ou téléchargement */
 function localDownloads(){return{save:async({filename,data})=>{
   if(isNative()&&capP('Filesystem')&&capP('Share')){const b64=(await blobToUrl(data)).split(',')[1],w=await capP('Filesystem').writeFile({path:filename.replace(/[\/\\:*?"<>|]/g,'-'),data:b64,directory:'CACHE'});
