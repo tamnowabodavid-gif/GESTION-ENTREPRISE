@@ -23,6 +23,8 @@ jobs:
         run: echo "version=$(grep -oP "APP_VERSION='\K[^']+" www/native.js)" >> "$GITHUB_OUTPUT"
       - name: Installer Capacitor
         run: npm install --no-audit --no-fund
+      - name: Ajouter Firebase (fonctionne hors connexion)
+        run: cp node_modules/firebase/firebase-app-compat.js node_modules/firebase/firebase-auth-compat.js node_modules/firebase/firebase-firestore-compat.js www/lib/
       - name: Préparer le projet Android
         run: |
           rm -rf android

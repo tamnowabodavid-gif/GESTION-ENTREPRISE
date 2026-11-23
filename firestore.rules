@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.email == 'tamnowabodavid@gmail.com' && request.auth.token.email_verified == true; }
+    function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function active() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && me().actif == true; }
+    function can(c) { return active() && c in me().colls; }
+    function onCh(cid) { return cid in me().chantiers; }
+    function myEmp() { return me().get('employeId', '-'); }
+
+    match /users/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow write: if isAdmin();
+    }
+    match /logins/{tel} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+    match /config/{doc} {
+      allow read: if isAdmin() || (doc == 'app' && active());
+      allow write: if isAdmin();
+    }
+    match /chantiers/{id} {
+      allow read: if isAdmin() || (can('chantiers') && onCh(id));
+      allow write: if isAdmin();
+    }
+    match /employes/{id} {
+      allow read: if isAdmin() || (active() && (id == myEmp() || (can('employes') && onCh(resource.data.chantierId))));
+      allow write: if isAdmin();
+    }
+    match /pointages/{id} {
+      allow read: if isAdmin() || (active() && (resource.data.employeId == myEmp() || (can('pointages') && onCh(resource.data.chantierId))));
+      allow create, update: if isAdmin() || (active() && (request.resource.data.employeId == myEmp() || (can('pointages') && onCh(request.resource.data.chantierId))));
+      allow delete: if isAdmin();
+    }
+    match /{coll}/{id} {
+      allow read, write: if isAdmin();
+      allow read: if coll in ['etapes', 'journal', 'historique', 'pieces', 'messages', 'rapports', 'demandes']
+                  && can(coll) && onCh(resource.data.chantierId);
+      allow create, update: if coll in ['etapes', 'journal', 'historique', 'pieces', 'messages', 'rapports', 'demandes']
+                  && can(coll) && onCh(request.resource.data.chantierId);
+    }
+  }
+}
