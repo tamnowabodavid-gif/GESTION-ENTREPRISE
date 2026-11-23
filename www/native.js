@@ -1,6 +1,7 @@
 /* native.js — application Android (APK), sauvegarde / restauration des données, mises à jour */
-const APP_VERSION='2026.11.22.3';
+const APP_VERSION='2026.11.22.4';
 const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const isDesk=()=>/Electron/i.test(navigator.userAgent);
 const capP=n=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[n];
 /* mode équipe (Firebase) : seulement dans l'application Android et la version ordinateur, jamais dans Claude */
 function loadJs(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=()=>res();s.onerror=()=>{s.remove();rej(new Error('chargement impossible : '+src))};document.head.appendChild(s)})}
@@ -31,18 +32,18 @@ async function importData(inp){const f=inp.files&&inp.files[0];inp.value='';if(!
     toast(`${n} éléments importés.`);if(bar)bar.innerHTML=bkInfo();render()}
   catch(e){toast("L'import s'est arrêté : "+(e&&e.message||'erreur'))}}
 function bkInfo(){let t='';try{const l=+localStorage.getItem('cp_lastBackup')||0;t=l?`Dernière sauvegarde depuis cet appareil : ${new Date(l).toLocaleString('fr-FR')}`:'Aucune sauvegarde faite depuis cet appareil.'}catch(e){}
-  return `${t}<br>Données : ${mode==='db'?'synchronisées avec ton compte Claude':isNative()?'enregistrées sur ce téléphone (application Android)':'enregistrées dans ce navigateur'} · version ${APP_VERSION}`}
+  return `${t}<br>Données : ${mode==='db'?(typeof TEAM!=='undefined'&&TEAM.on?'synchronisées avec le cloud de l\'entreprise':'synchronisées avec ton compte Claude'):isNative()?'enregistrées sur ce téléphone (application Android)':isDesk()?'enregistrées sur cet ordinateur':'enregistrées dans ce navigateur'} · version ${APP_VERSION}`}
 function dataBlock(){const E=ent();return `<div class="f" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:12px"><span class="lbl">💾 Mes données et l'application</span>
   <div class="sm mute" id="bkInfo" style="margin:4px 0 8px">${bkInfo()}</div>
   <div class="qbtns"><button type="button" class="btn sec small" onclick="exportData()">💾 Sauvegarder mes données</button><label class="btn ghost small upl">📥 Restaurer une sauvegarde<input type="file" accept=".json,application/json" onchange="importData(this)"></label></div>
   <div class="note" style="margin-top:6px">La sauvegarde est un fichier unique avec tous les chantiers, devis, prix et réglages. Envoie-le dans Google Drive pour l'avoir dans le cloud, ou restaure-le dans l'autre version (Claude ou application Android).</div>
-  ${isNative()?`<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn sec small" onclick="checkUpdate(true)">🔄 Vérifier les mises à jour</button></div>`:''}
+  ${isNative()||isDesk()?`<div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><button type="button" class="btn sec small" onclick="checkUpdate(true)">🔄 Vérifier les mises à jour</button></div>`:''}
   <label class="f" style="margin-top:8px"><span>Dépôt GitHub de l'application Android (pour les mises à jour)</span><input id="apkRepo" value="${esc(E.apkRepo||'tamnowabodavid-gif/GESTION-ENTREPRISE')}" placeholder="tamnowabodavid-gif/GESTION-ENTREPRISE" onchange="saveConfig({entreprise:{...ent(),apkRepo:this.value.trim()}})"></label></div>`}
 /* ---------- mises à jour de l'application Android ---------- */
 const verCmp=(a,b)=>{const A=String(a).replace(/^v/,'').split(/[.\-]/).map(Number),B=String(b).replace(/^v/,'').split(/[.\-]/).map(Number);for(let i=0;i<Math.max(A.length,B.length);i++){const d=(A[i]||0)-(B[i]||0);if(d)return d}return 0};
 async function checkUpdate(manual){const repo=(ent().apkRepo||'tamnowabodavid-gif/GESTION-ENTREPRISE').trim();if(!repo){if(manual)toast("Indique d'abord le dépôt GitHub de l'application.");return}
   try{const r=await fetch(`https://api.github.com/repos/${repo}/releases/latest`,{headers:{Accept:'application/vnd.github+json'}});if(!r.ok)throw new Error(r.status===404?'dépôt ou version introuvable (le dépôt doit être public)':'GitHub '+r.status);
-    const j=await r.json(),tag=j.tag_name||'',apk=(j.assets||[]).find(a=>/\.apk$/i.test(a.name));
+    const j=await r.json(),tag=j.tag_name||'',apk=(j.assets||[]).find(a=>(isDesk()?/\.exe$/i:/\.apk$/i).test(a.name));
     if(verCmp(tag,APP_VERSION)>0&&apk){window.__upd={tag,url:apk.browser_download_url,notes:j.body||''};render();if(manual)toast('Nouvelle version '+tag+' disponible.')}else if(manual)toast(`Tu as la dernière version (${APP_VERSION}).`)}
   catch(e){if(manual)toast('Vérification impossible : '+e.message)}}
 async function openUpdate(){const u=window.__upd;if(!u)return;try{localStorage.setItem('cp_lastBackup_hint','1')}catch(e){}
@@ -50,5 +51,6 @@ async function openUpdate(){const u=window.__upd;if(!u)return;try{localStorage.s
 function updBanner(){const u=window.__upd;return u?`<div class="banner" style="display:flex;justify-content:space-between;align-items:center;gap:8px">Nouvelle version ${esc(u.tag)} de GESTION D'ENTREPRISE <button class="btn small" onclick="openUpdate()">Télécharger</button></div>`:''}
 function backupReminder(){if(mode==='db')return'';let l=0;try{l=+localStorage.getItem('cp_lastBackup')||0}catch(e){}const j=l?Math.floor((Date.now()-l)/864e5):null;
   return j===null||j>=7?`<div class="banner w" style="display:flex;justify-content:space-between;align-items:center;gap:8px">${j===null?'Aucune sauvegarde de tes données.':'Dernière sauvegarde il y a '+j+' jours.'} <button class="btn small" onclick="exportData()">💾 Sauvegarder</button></div>`:''}
+if(isDesk())setTimeout(()=>checkUpdate(false),4000);
 if(isNative()){document.documentElement.classList.add('native');setTimeout(()=>checkUpdate(false),4000);
   const app=capP('App');if(app)app.addListener('backButton',()=>{if(document.querySelector('.modal-bg')){closeForm();return}if(ui.view!=='home'){$('#btnBack').click();return}app.minimizeApp()})}
