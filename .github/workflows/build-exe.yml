@@ -1,0 +1,43 @@
+name: Construire l'application Windows
+on:
+  workflow_run:
+    workflows: ["Construire l'APK GESTION D'ENTREPRISE"]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  exe:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Lire la version
+        id: v
+        run: |
+          V=$(sed -n "s/.*APP_VERSION='\([^']*\)'.*/\1/p" www/native.js | head -1)
+          IFS=. read a b c d <<< "$V"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "semver=$a.$((10#$b))$(printf '%02d' $((10#$c))).$((10#${d:-0}))" >> "$GITHUB_OUTPUT"
+      - name: Préparer l'application (Firebase compris)
+        run: |
+          npm install --no-audit --no-fund
+          cp node_modules/firebase/firebase-app-compat.js node_modules/firebase/firebase-auth-compat.js node_modules/firebase/firebase-firestore-compat.js www/lib/
+          npx esbuild fb-entry.js --bundle --format=iife --global-name=FBM --minify --outfile=www/lib/firebase-mod.js
+          cp -r www desktop/www
+      - name: Fabriquer l'installateur Windows
+        working-directory: desktop
+        run: |
+          npm install --no-audit --no-fund
+          npx electron-builder --win nsis --publish never -c.extraMetadata.version=${{ steps.v.outputs.semver }} "-c.win.artifactName=GESTION-ENTREPRISE-${{ steps.v.outputs.version }}-Windows.\${ext}"
+      - name: Ajouter l'installateur à la version
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}
+          files: desktop/dist/*.exe

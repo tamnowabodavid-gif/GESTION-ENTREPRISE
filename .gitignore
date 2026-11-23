@@ -3,3 +3,6 @@ android/
 *.jks
 *.b64
 mot-de-passe.txt
+desktop/dist/
+desktop/www/
+desktop/node_modules/

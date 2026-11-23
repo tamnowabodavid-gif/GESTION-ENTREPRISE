@@ -1,0 +1,26 @@
+{
+  "name": "gestion-entreprise",
+  "productName": "GESTION D’ENTREPRISE",
+  "version": "1.0.0",
+  "description": "GESTION D’ENTREPRISE – KLEIN TECH-INNOVATION",
+  "author": "KLEIN TECH-INNOVATION",
+  "main": "main.js",
+  "private": true,
+  "devDependencies": {
+    "electron": "45.4.1",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.kleintech.gestion",
+    "productName": "GESTION D’ENTREPRISE",
+    "files": ["main.js", "www/**/*"],
+    "directories": { "output": "dist" },
+    "win": { "target": ["nsis"] },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
