@@ -24,8 +24,9 @@ jobs:
           node-version: 20
       - name: Ajouter Firebase
         run: |
-          npm install --no-audit --no-fund --no-save firebase@13.4.0
+          npm install --no-audit --no-fund --no-save firebase@13.4.0 esbuild@0.28.2
           cp node_modules/firebase/firebase-app-compat.js node_modules/firebase/firebase-auth-compat.js node_modules/firebase/firebase-firestore-compat.js www/lib/
+          npx esbuild fb-entry.js --bundle --format=iife --global-name=FBM --minify --outfile=www/lib/firebase-mod.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
