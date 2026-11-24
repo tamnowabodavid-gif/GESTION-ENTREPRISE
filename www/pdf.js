@@ -27,8 +27,8 @@ const ensure=(doc,y,need)=>{if(y+need>278){doc.addPage();return 18}return y};
 const tstyle=col=>({theme:'grid',styles:{font:'helvetica',fontSize:8,cellPadding:1.5,lineColor:[225,219,209],lineWidth:0.1,textColor:[30,35,43]},headStyles:{fillColor:col,textColor:255,fontStyle:'bold'},margin:{left:14,right:14,bottom:18}});
 async function savePdf(doc,filename){if(SIGN)filename=filename.replace(/\.pdf$/,' - signé.pdf');const gen=lastGen,signed=SIGN;pdfFooter(doc);window.__lastPdf=doc;const blob=doc.output('blob');
   $('#modalRoot').innerHTML=`<div class="modal-bg"><div class="modal"><h2>📄 Document prêt</h2><div class="sm mute" style="margin-bottom:14px">${esc(filename)}</div>
-    ${signed?'<div class="pst ok" style="margin-bottom:10px">✍️ Signé et cacheté</div>':''}<button class="btn block" id="pdfSave">⬇️ Enregistrer / partager le PDF</button>
-    ${gen&&!signed?'<button class="btn sec block" id="pdfSign" style="margin-top:8px">✍️ Signer et cacheter</button>':''}<div class="note">Une fois enregistré, ouvre le fichier depuis <b>Fichiers</b> (iPhone) ou <b>Téléchargements</b> (Android) pour l'imprimer ou l'envoyer par WhatsApp.</div><div class="note" id="pdfMsg"></div>
+    ${signed?'<div class="pst ok" style="margin-bottom:10px">✍️ Signé et cacheté</div>':''}<button class="btn block" id="pdfSave">📲 Envoyer par WhatsApp / enregistrer</button>
+    ${gen&&!signed?'<button class="btn sec block" id="pdfSign" style="margin-top:8px">✍️ Signer et cacheter</button>':''}<div class="note">${typeof isNative==='function'&&isNative()?"Le menu de partage s'ouvre : choisis <b>WhatsApp</b>, puis le contact. Le PDF part en pièce jointe.":"Si le menu de partage s'ouvre, choisis <b>WhatsApp</b>. Sinon, le PDF est enregistré : dans WhatsApp, ouvre la conversation, touche <b>📎 › Document</b> et choisis-le dans <b>Téléchargements</b> (Android) ou <b>Fichiers</b> (iPhone)."}</div><div class="note" id="pdfMsg"></div>
     <button class="btn sec block" style="margin-top:12px" onclick="closeForm()">Fermer</button></div></div>`;
   const msg=t=>{const m=$('#pdfMsg');if(m)m.innerHTML=t};
   const sb=$('#pdfSign');if(sb)sb.onclick=()=>signerEtCacheter(gen);

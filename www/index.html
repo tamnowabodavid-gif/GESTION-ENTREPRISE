@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chantier Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GESTION D'ENTREPRISE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -146,11 +146,12 @@ body.hasnav #app{padding-bottom:96px}
 .mtit{margin:6px 0 8px;font-size:13px}.mtit ul{margin:2px 0 0 16px;padding:0}.mtit li{margin:1px 0}
 .mobox{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;margin-bottom:12px}.mobox .chk{font-size:13px;margin:0}
 </style>
+<link rel="stylesheet" href="look.css">
 </head>
 <body>
 <div class="top">
   <div class="logo" id="brand"></div>
-  <h1 id="title">Chantier Pro</h1>
+  <h1 id="title">GESTION D'ENTREPRISE</h1>
   <button class="iconbtn" id="btnBack" style="display:none">← Accueil</button>
   <button class="iconbtn" id="btnCat" title="Catalogue des matériaux">📦</button>
   <button class="iconbtn" id="btnSettings" title="Mon entreprise">⚙︎</button>
@@ -183,6 +184,18 @@ body.hasnav #app{padding-bottom:96px}
 <script src="dossier.js"></script>
 <script src="entreprise.js"></script>
 <script src="finances.js"></script>
+<script src="look.js"></script>
+<script src="msg.js"></script>
+<script src="etapes2.js"></script>
+<script src="intervenants.js"></script>
+<script src="paie2.js"></script>
+<script src="pointage2.js"></script>
+<script src="reglement.js"></script>
+<script src="appro.js"></script>
+<script src="appro2.js"></script>
+<script src="contrat2.js"></script>
+<script src="gantt.js"></script>
+<script src="vitrine.js"></script>
 <script>
 $('#btnBack').onclick=()=>{ui.devisId=null;ui.bonId=null;go(ui.view==='bail'?'locations':ui.view==='fondcat'?'catalogue':'home')};
 $('#btnCat').onclick=()=>go('catalogue');
