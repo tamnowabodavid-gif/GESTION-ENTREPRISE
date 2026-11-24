@@ -1,5 +1,8 @@
 name: Construire l'APK GESTION D'ENTREPRISE
 on:
+  push:
+    branches: [main]
+    paths: ['www/**']
   workflow_dispatch:
 permissions:
   contents: write
